@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Happy Birthday Flipbook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --w: 900px;
+      --h: 600px;
+      --paper:#fff8ec;
+      --ink:#1e293b;
+      --accent:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; display:grid; min-height:100svh; place-items:center;
+      background: radial-gradient(1200px 600px at 20% -10%, #ffe6f1 0, transparent 40%),
+                  radial-gradient(900px 500px at 100% 0%, #fff3d6 0, transparent 45%),
+                  linear-gradient(180deg, #fff 0, #ffe 100%);
+      color:var(--ink); font-family:Poppins, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    }
+    .app{ width:min(100vw, var(--w)); padding:16px }
+    .header{ text-align:center; margin-bottom:14px }
+    .header h1{ font-size:clamp(22px, 3vw, 32px); margin:0; font-weight:700 }
+    .header p{ margin:6px 0 0; opacity:.7; font-size:14px }
+
+    .book-wrap{ display:flex; justify-content:center; }
+    .book{
+      position:relative; width:var(--w); height:var(--h);
+      max-width:100%; aspect-ratio:3/2; perspective:2200px; user-select:none;
+      filter: drop-shadow(0 30px 40px rgba(17,24,39,.18));
+    }
+    .bg{
+      position:absolute; inset:0; border-radius:18px; background:#fdf7ec;
+      border:1px solid #f1e6cf;
+    }
+    .spine{ position:absolute; top:0; bottom:0; left:calc(50% - 2px); width:4px; background:#e9dcc1; box-shadow: inset 0 0 0 1px #e2d4b6; }
+
+    .page{
+      position:absolute; top:0; width:50%; height:100%;
+      background:linear-gradient(90deg, rgba(0,0,0,.06), rgba(0,0,0,0)), var(--paper);
+      border-radius:18px 0 0 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+      transform-origin:left center; transition:transform .8s cubic-bezier(.2,.7,.1,1), box-shadow .8s;
+      will-change:transform; overflow:hidden; padding:28px 28px 28px 34px;
+    }
+    .page.right{
+      left:50%; border-radius:0 18px 18px 0; transform-origin:right center;
+      background:linear-gradient(270deg, rgba(0,0,0,.06), rgba(0,0,0,0)), var(--paper);
+      padding:28px 34px 28px 28px;
+    }
+    .page::after{
+      content:""; position:absolute; top:0; bottom:0; width:40px; right:-20px;
+      background: radial-gradient(40px 100% at 0% 50%, rgba(0,0,0,.15), transparent 70%);
+      opacity:.25; pointer-events:none;
+    }
+    .page.right::after{
+      left:-20px; right:auto; background: radial-gradient(40px 100% at 100% 50%, rgba(0,0,0,.15), transparent 70%);
+    }
+    .page.flipped.left{ transform:rotateY(-180deg); z-index:1 }
+    .page.flipped.right{ transform:rotateY(180deg); z-index:1 }
+    .page.left{ z-index:var(--z); left:0 }
+    .page.right{ z-index:var(--z); }
+
+    h2.title{ font-family:"Playfair Display", serif; font-size:clamp(22px, 2.2vw, 30px); margin:0 0 10px }
+    p{ line-height:1.6; margin:0 0 10px }
+    .muted{ opacity:.65 }
+
+    .ribbon{ position:absolute; top:22px; right:-60px; transform:rotate(40deg); background:var(--accent); color:#fff; padding:8px 80px; font-weight:600; box-shadow:0 6px 12px rgba(0,0,0,.15) }
+
+    .photo{
+      width:100%; aspect-ratio:16/10; border-radius:14px; object-fit:contain; display:block; box-shadow:0 8px 22px rgba(0,0,0,.12);
+      border:1px solid #eadfc6;
+    }
+    .note{ background:#fff; border:1px dashed #e5cfa3; border-radius:12px; padding:12px 14px; }
+    .footer{ position:absolute; bottom:18px; left:0; right:0; padding:0 24px; font-size:12px; color:#8b6d2b; display:flex; justify-content:space-between }
+
+    .controls{ margin-top:14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap }
+    button{
+      appearance:none; border:1px solid #e5e7eb; background:#111827; color:#fff; padding:10px 14px; border-radius:999px; font-weight:600; cursor:pointer;
+      box-shadow:0 8px 18px rgba(17,24,39,.15);
+    }
+    button.secondary{ background:#fff; color:#111; }
+    button:disabled{ opacity:.5; cursor:not-allowed }
+
+    .confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .confetti span{ position:absolute; background:var(--accent); top:-20px; left:0; animation:fall 2.8s linear forwards; }
+    @keyframes fall { to { transform: translateY(120vh) rotate(540deg) } }
+
+    @media (max-width: 768px){
+      :root{ --w: 92vw; --h: 64vw; }
+      .page{ padding:18px 18px 18px 22px }
+      .page.right{ padding:18px 22px 18px 18px }
+    }
+  </style>
+</head>
+<body>
+  <audio id="bg-music" loop>
+    <source src="https://raw.githubusercontent.com/Ankitverma015/Yoooooo/main/yoooooooooooooooooooooooo.mp3" type="audio/mpeg">
+  </audio>
+
+  <div class="app">
+    <div class="header">
+      <h1>🎉 Birthday Flipbook</h1>
+      <p>Click the right page (or press →) to flip. Click the left page (or press ←) to go back.</p>
+    </div>
+
+    <div class="book-wrap">
+      <div class="book" id="book">
+        <div class="bg"></div>
+        <div class="spine"></div>
+        <div class="confetti" id="confetti"></div>
+
+        <!-- LEFT SIDE PAGES -->
+        <section class="page left" style="--z:8">
+          <div class="ribbon">For You 🎁</div>
+          <h2 class="title">Happy Birthday, Friend! 🥳</h2>
+          <p class="muted">A tiny book of big wishes.</p>
+          <img class="photo" src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?q=80&w=1200&auto=format&fit=crop" alt="Birthday cake" />
+          <div class="footer"><span>Cover</span><span>1</span></div>
+        </section>
+
+        <section class="page left" style="--z:7">
+          <h2 class="title">The Wish</h2>
+          <p>May your day sparkle with laughter, your year overflow with joy, and every page ahead be better than the last.</p>
+          <div class="note" style="margin-top:10px">
+            <strong>To Friend:</strong>
+            <p>You’re a one-of-a-kind human. Thanks for being you. 💛</p>
+          </div>
+          <div class="footer"><span>Message</span><span>2</span></div>
+        </section>
+
+        <section class="page left" style="--z:6">
+          <h2 class="title">A Memory</h2>
+          <img class="photo" src="https://raw.githubusercontent.com/Ankitverma015/Yoooooo/main/hi.jpg">
+          <p class="muted">Remember this day? Let’s make more like it.</p>
+          <div class="footer"><span>Photo</span><span>3</span></div>
+        </section>
+
+        <section class="page left" style="--z:5">
+          <h2 class="title">3 Things I Admire</h2>
+          <ol>
+            <li>Your kindness that fills every room.</li>
+            <li>Your courage to chase big dreams.</li>
+            <li>Your laugh that’s totally contagious.</li>
+          </ol>
+          <div class="footer"><span>List</span><span>4</span></div>
+        </section>
+
+        <!-- RIGHT SIDE PAGES -->
+        <section class="page right" style="--z:8">
+          <h2 class="title">Let’s Celebrate</h2>
+          <p>Make a wish and flip on! 🎂</p>
+          <img src="https://raw.githubusercontent.com/Ankitverma015/Yoooooo/main/photo.jpg" alt="My Image" width="400px" height="400px">
+          <div class="footer"><span>Start →</span><span>5</span></div>
+        </section>
+
+        <section class="page right" style="--z:7">
+          <h2 class="title">Coupon 🎟</h2>
+          <div class="note">
+            <p>This voucher entitles Friend to: one epic treat, my undivided time, and unlimited bad jokes.</p>
+            <p class="muted">Valid forever. No refunds, only memories.</p>
+          </div>
+          <div class="footer"><span>Fun</span><span>6</span></div>
+        </section>
+
+        <section class="page right" style="--z:6">
+          <h2 class="title">Goals for Your Next Trip Around the Sun 🌞</h2>
+          <ul>
+            <li>Try something completely new.</li>
+            <li>Take that trip we keep talking about.</li>
+            <li>Celebrate small wins every week.</li>
+          </ul>
+          <div class="footer"><span>Goals</span><span>7</span></div>
+        </section>
+
+        <section class="page right" style="--z:5">
+          <h2 class="title">With Love, —Your Friend</h2>
+          <p>Flip back anytime. This book is yours. 💫</p>
+          <div class="footer"><span>Back Cover</span><span>8</span></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="prevBtn" class="secondary" aria-label="Previous page">← Prev</button>
+      <button id="nextBtn" aria-label="Next page">Next →</button>
+    </div>
+  </div>
+
+  <script>
+    const book = document.getElementById('book');
+    const pagesLeft = Array.from(book.querySelectorAll('.page.left'));
+    const pagesRight = Array.from(book.querySelectorAll('.page.right'));
+    let index = 0;
+    let musicStarted = false;
+    let confettiThrown = false;
+
+    function render(){
+      pagesLeft.forEach((pg, i)=> pg.classList.toggle('flipped', i < index));
+      pagesRight.forEach((pg, i)=> pg.classList.toggle('flipped', i < index));
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === pagesLeft.length;
+    }
+
+    function next(){
+      if(index < pagesLeft.length){
+        index++;
+        render();
+        if(index === pagesLeft.length && !confettiThrown){
+          throwConfetti();
+          playMusic();
+          confettiThrown = true;
+        }
+      }
+      book.style.filter = 'drop-shadow(0 40px 50px rgba(17,24,39,.22))';
+      setTimeout(()=> book.style.filter = 'drop-shadow(0 30px 40px rgba(17,24,39,.18))', 250);
+    }
+
+    function prev(){
+      if(index > 0){ index--; render(); }
+    }
+
+    function playMusic(){
+      if(!musicStarted){
+        document.getElementById("bg-music").play();
+        musicStarted = true;
+      }
+    }
+
+    book.addEventListener('click', (e)=>{
+      const rect = book.getBoundingClientRect();
+      const isRight = (e.clientX - rect.left) > rect.width/2;
+      isRight ? next() : prev();
+    });
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    prevBtn.addEventListener('click', (e)=>{ e.stopPropagation(); prev(); });
+    nextBtn.addEventListener('click', (e)=>{ e.stopPropagation(); next(); });
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowRight') next();
+      if(e.key === 'ArrowLeft') prev();
+    });
+
+    function throwConfetti(){
+      const confetti = document.getElementById('confetti');
+      const pieces = 80;
+      for(let i=0;i<pieces;i++){
+        const s = document.createElement('span');
+        s.style.left = Math.random()*100 + 'vw';
+        s.style.width = 6 + Math.random()*8 + 'px';
+        s.style.height = 8 + Math.random()*10 + 'px';
+        s.style.opacity = .6 + Math.random()*0.4;
+        s.style.background = `hsl(${Math.random()*360}, 90%, 60%)`;
+        s.style.animationDelay = (Math.random()*0.6)+'s';
+        confetti.appendChild(s);
+        setTimeout(()=> s.remove(), 3200);
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
